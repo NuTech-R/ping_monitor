@@ -20,7 +20,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ping_monitor_node = ping_monitor.ping_monitor_node:main',
             'topic_ping_node = ping_monitor.topic_ping_node:main',
             'topic_echo_node = ping_monitor.topic_echo_node:main',
         ],

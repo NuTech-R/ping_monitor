@@ -7,25 +7,21 @@ from std_msgs.msg import Float32, Header
 
 
 class TopicPingNode(Node):
-    """ROSトピックの往復時間で操縦リンクの遅延・ロスを測るノード(操縦PC側)。
+    """ROSトピックの往復時間で通信リンクの遅延・ロスを測るノード(計測側)。
 
-    link_ping/request に載せたseqをロボット側のtopic_echo_nodeがそのまま返し、
-    受信までの時間をRTTとしてpublishする。経路解決はrmw任せなので、
+    link_ping/request に載せたseqを計測対象側のtopic_echo_nodeがそのまま返し、
+    受信までの時間をRTTとして ping_latency にpublishする。経路解決はrmw任せなので、
     LAN直結でもWAN(中継サーバ経由)でも実際のデータ経路そのものを測れる。
-    送信・受信ともこのノードの時計だけで完結するため、2機間の時刻同期は不要。
-    publish先はICMP版ping_monitor_nodeと同じ ping_latency / ping_packet_loss 。
+    送信・受信ともこのノードの時計だけで完結するため、対向との時刻同期は不要。
     """
+
+    PING_INTERVAL = 0.5  # 秒
+    TIMEOUT = 1.0  # 秒。WAN最悪RTTより十分大きく、これ超過はロスとみなす
 
     def __init__(self):
         super().__init__('topic_ping_node')
 
-        self.declare_parameter('ping_interval', 0.5)
-        self.declare_parameter('timeout', 1.0)
-
-        self.ping_interval = self.get_parameter('ping_interval').value
-        self.timeout = self.get_parameter('timeout').value
-
-        # 操縦データと同じ土俵で測るためbest_effort(落ちたらロスとして観測する)
+        # 実データと同じ土俵で測るためbest_effort(落ちたらロスとして観測する)
         qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.BEST_EFFORT)
 
         self.request_pub = self.create_publisher(Header, 'link_ping/request', qos)
@@ -38,7 +34,7 @@ class TopicPingNode(Node):
         self.seq = 0
         self.pending = {}  # seq -> 送信時刻(ns)
 
-        self.timer = self.create_timer(self.ping_interval, self.timer_callback)
+        self.timer = self.create_timer(self.PING_INTERVAL, self.timer_callback)
         self.get_logger().info('Topic ping monitor started')
 
     def timer_callback(self):
@@ -46,7 +42,7 @@ class TopicPingNode(Node):
 
         # タイムアウトした要求はロス扱いにする
         for seq, sent_ns in list(self.pending.items()):
-            if (now_ns - sent_ns) > self.timeout * 1e9:
+            if (now_ns - sent_ns) > self.TIMEOUT * 1e9:
                 del self.pending[seq]
                 self.publish_metrics(-1.0, 100.0)
 

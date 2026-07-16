@@ -3,7 +3,7 @@
 <package format="3">
   <name>ping_monitor</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>ROSトピック往復(RTT)で通信リンクの遅延・ロスを監視するパッケージ</description>
   <maintainer email="robohase01@gmail.com">hasegawa</maintainer>
   <license>TODO: License declaration</license>
 

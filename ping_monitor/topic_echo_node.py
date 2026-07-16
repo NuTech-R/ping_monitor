@@ -7,9 +7,9 @@ from std_msgs.msg import Header
 
 
 class TopicEchoNode(Node):
-    """link_ping/request を受けたらそのまま link_ping/response に返すノード(ロボット側)。
+    """link_ping/request を受けたらそのまま link_ping/response に返すノード(応答側)。
 
-    操縦PC側のtopic_ping_nodeと対で使う。
+    計測側のtopic_ping_nodeと対で使う。
     """
 
     def __init__(self):
